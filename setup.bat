@@ -117,11 +117,11 @@ if not exist "go.mod" (
     exit /b 1
 )
 
-REM Ensure Go module cache directory exists to prevent creation errors
-if defined USERPROFILE (
-    if not exist "%USERPROFILE%\go" mkdir "%USERPROFILE%\go" 2>nul
-)
-if "%GOPATH%"=="" set "GOPATH=%USERPROFILE%\go"
+REM Set safe GOPATH and GOCACHE in %TEMP% to prevent module cache folder creation errors
+if not exist "%TEMP%\go-path" mkdir "%TEMP%\go-path" 2>nul
+if not exist "%TEMP%\go-cache" mkdir "%TEMP%\go-cache" 2>nul
+set "GOPATH=%TEMP%\go-path"
+set "GOCACHE=%TEMP%\go-cache"
 
 echo ==================================================
 echo [*] Building go-m3u8-downloader.exe...
