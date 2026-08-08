@@ -135,7 +135,6 @@ go-m3u8-downloader/
 ├── setup.sh              # Automated Linux / macOS setup & launcher script
 ├── go.mod                # Go module metadata
 ├── go.sum                # Dependency checksums
-├── GEMINI.md             # Project requirements specification
 └── README.md             # Project documentation
 ```
 
