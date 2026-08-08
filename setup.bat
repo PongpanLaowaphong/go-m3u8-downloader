@@ -117,6 +117,12 @@ if not exist "go.mod" (
     exit /b 1
 )
 
+REM Ensure Go module cache directory exists to prevent creation errors
+if defined USERPROFILE (
+    if not exist "%USERPROFILE%\go" mkdir "%USERPROFILE%\go" 2>nul
+)
+if "%GOPATH%"=="" set "GOPATH=%USERPROFILE%\go"
+
 echo ==================================================
 echo [*] Building go-m3u8-downloader.exe...
 echo ==================================================
@@ -125,7 +131,7 @@ go build -o go-m3u8-downloader.exe .
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] Build failed!
-    echo Please ensure Go (>= 1.18) is installed correctly from https://go.dev/doc/install
+    echo Please ensure Go ^(^>= 1.18^) is installed correctly from https://go.dev/doc/install
     echo.
     pause
     exit /b 1
