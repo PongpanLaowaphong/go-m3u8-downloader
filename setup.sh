@@ -8,22 +8,35 @@ echo "       🎬 Go M3U8 High-Speed Downloader Setup      "
 echo "=================================================="
 echo ""
 
+MIN_GO_VERSION="1.18"
+
 # Function to check or install Go
 check_or_install_go() {
     if command -v go &> /dev/null; then
-        GO_VER=$(go version)
-        echo "✔ Go compiler is already installed: $GO_VER"
-        return 0
+        GO_VER_RAW=$(go version)
+        GO_VER_NUM=$(echo "$GO_VER_RAW" | awk '{print $3}' | sed 's/go//')
+        
+        MAJOR=$(echo "$GO_VER_NUM" | cut -d. -f1)
+        MINOR=$(echo "$GO_VER_NUM" | cut -d. -f2)
+        
+        # Check if version is >= 1.18
+        if [ "$MAJOR" -gt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -ge 18 ]; }; then
+            echo "✔ Go compiler is already installed: $GO_VER_RAW (Compatible >= 1.18)"
+            return 0
+        else
+            echo "⚠️  Installed Go version ($GO_VER_NUM) is older than minimum required version (>= 1.18)."
+        fi
+    else
+        echo "⚠️  Go compiler was not found on your system."
     fi
 
-    echo "⚠️  Go compiler was not found on your system."
     echo "🌐 Reference: https://go.dev/doc/install"
     echo ""
-    read -p "👉 Would you like to automatically install Go compiler now? (Y/n): " INSTALL_CHOICE
+    read -p "👉 Would you like to install/upgrade Go compiler now? (Y/n): " INSTALL_CHOICE
     INSTALL_CHOICE=${INSTALL_CHOICE:-Y}
 
     if [[ "$INSTALL_CHOICE" =~ ^[Yy]$ ]]; then
-        echo "🚀 Installing Go compiler..."
+        echo "🚀 Installing/Upgrading Go compiler..."
         if command -v apt-get &> /dev/null; then
             sudo apt-get update && sudo apt-get install -y golang-go
         elif command -v dnf &> /dev/null; then
@@ -46,13 +59,13 @@ check_or_install_go() {
         export PATH=$PATH:/usr/local/go/bin:~/go/bin
 
         if command -v go &> /dev/null; then
-            echo "✔ Go compiler successfully installed: $(go version)"
+            echo "✔ Go compiler ready: $(go version)"
         else
             echo "❌ Failed to automatically install Go. Please install Go manually from https://go.dev/doc/install"
             exit 1
         fi
     else
-        echo "❌ Go compiler is required to build the program. Exiting."
+        echo "❌ Go compiler (>= 1.18) is required to build the program. Exiting."
         exit 1
     fi
 }

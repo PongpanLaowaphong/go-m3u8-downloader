@@ -12,7 +12,7 @@ where go >nul 2>nul
 if %errorlevel% equ 0 (
     for /f "tokens=*" %%v in ('go version') do set GO_VERSION=%%v
     echo ✔ Go compiler is already installed on this machine:
-    echo   %GO_VERSION%
+    echo   %GO_VERSION% (Compatible ^>= 1.18)
     echo.
     goto check_binary
 )
