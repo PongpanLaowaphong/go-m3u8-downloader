@@ -109,6 +109,14 @@ pause
 exit /b 1
 
 :build
+if not exist "go.mod" (
+    echo [ERROR] go.mod file was not found in %CD%!
+    echo Please ensure setup.bat is located inside the project directory alongside go.mod and main.go.
+    echo.
+    pause
+    exit /b 1
+)
+
 echo ==================================================
 echo [*] Building go-m3u8-downloader.exe...
 echo ==================================================
