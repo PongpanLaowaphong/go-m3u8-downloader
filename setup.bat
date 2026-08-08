@@ -8,81 +8,105 @@ echo       Go M3U8 High-Speed Downloader Setup
 echo ==================================================
 echo.
 
-REM Check if executable already exists
+REM 1. If pre-compiled binary exists, jump to menu
 if exist "go-m3u8-downloader.exe" goto menu
 
-REM Check Go Compiler Installation in PATH
+REM 2. Check if Go is in PATH
 where go >nul 2>nul
-if %errorlevel% equ 0 (
-    for /f "tokens=*" %%v in ('go version') do set GO_VERSION=%%v
-    echo [OK] Go compiler is already installed on this machine:
-    echo      %GO_VERSION% (Compatible ^>= 1.18)
-    echo.
-    goto build
-)
+if %errorlevel% equ 0 goto go_found_path
 
-REM Check if Go exists in standard installation directory
-if exist "C:\Program Files\Go\bin\go.exe" (
-    set "PATH=%PATH%;C:\Program Files\Go\bin"
-    for /f "tokens=*" %%v in ('"C:\Program Files\Go\bin\go.exe" version') do set GO_VERSION=%%v
-    echo [OK] Go compiler found at C:\Program Files\Go\bin:
-    echo      %GO_VERSION%
-    echo.
-    goto build
-)
+REM 3. Check if Go is in default Program Files directory
+if exist "C:\Program Files\Go\bin\go.exe" goto go_found_programfiles
 
-echo [!] Go compiler was not found on your system!
-echo [*] Installation reference: https://go.dev/doc/install
+REM 4. Check if Go is in 32-bit Program Files directory
+if exist "C:\Program Files (x86)\Go\bin\go.exe" goto go_found_programfiles86
+
+REM 5. Go is NOT installed anywhere on this system -> Go to installer
+goto go_missing
+
+:go_found_path
+echo [OK] Go compiler is already installed on this machine:
+go version
 echo.
+goto build
+
+:go_found_programfiles
+set "PATH=%PATH%;C:\Program Files\Go\bin"
+echo [OK] Go compiler found at C:\Program Files\Go\bin:
+go version
+echo.
+goto build
+
+:go_found_programfiles86
+set "PATH=%PATH%;C:\Program Files (x86)\Go\bin"
+echo [OK] Go compiler found at C:\Program Files (x86)\Go\bin:
+go version
+echo.
+goto build
+
+:go_missing
+echo [!] Go compiler was not found on your system!
+echo [*] Reference: https://go.dev/doc/install
+echo.
+set DO_INSTALL=Y
 set /p DO_INSTALL="[?] Would you like to automatically install Go compiler now? (Y/N) [Default: Y]: "
 if "%DO_INSTALL%"=="" set DO_INSTALL=Y
 
-if /i not "%DO_INSTALL%"=="Y" (
-    echo [ERROR] Go compiler is required to build the program. Exiting.
-    echo.
-    pause
-    exit /b 1
-)
+if /i not "%DO_INSTALL%"=="Y" goto manual_install_instructions
 
 echo.
-echo [*] Installing Go compiler...
+echo [*] Attempting to install Go compiler automatically...
+
 where winget >nul 2>nul
 if %errorlevel% equ 0 (
-    echo [*] Installing via winget...
+    echo [*] Installing Go via winget...
     winget install --id GoLang.Go -e --accept-source-agreements --accept-package-agreements
-    set "PATH=%PATH%;C:\Program Files\Go\bin"
-) else (
-    echo [*] Downloading official Go MSI installer from https://go.dev/dl/...
-    curl -Lo go_installer.msi https://go.dev/dl/go1.22.5.windows-amd64.msi
-    if errorlevel 1 (
-        echo [ERROR] Failed to download Go installer. Please install Go manually from https://go.dev/doc/install
-        echo.
-        pause
-        exit /b 1
-    )
-    echo [*] Running Go MSI Installer...
-    msiexec /i go_installer.msi /qb
-    del /f /q go_installer.msi >nul 2>nul
-    set "PATH=%PATH%;C:\Program Files\Go\bin"
+    if exist "C:\Program Files\Go\bin\go.exe" set "PATH=%PATH%;C:\Program Files\Go\bin"
+    goto verify_install
 )
 
-REM Verify installation
-if exist "C:\Program Files\Go\bin\go.exe" (
-    set "PATH=%PATH%;C:\Program Files\Go\bin"
-)
-
-where go >nul 2>nul
+echo [*] Downloading official Go installer from https://go.dev/dl/...
+curl -Lo go_installer.msi https://go.dev/dl/go1.22.5.windows-amd64.msi
 if %errorlevel% neq 0 (
-    echo.
-    echo [OK] Go installation completed!
-    echo [!] Please close this Command Prompt window and open setup.bat again to refresh system environment variables.
-    echo.
-    pause
-    exit /b 0
+    echo [ERROR] Failed to download Go installer.
+    goto manual_install_instructions
 )
 
-echo [OK] Go compiler successfully installed!
+echo [*] Running Go MSI Installer...
+msiexec /i go_installer.msi /qb
+del /f /q go_installer.msi >nul 2>nul
+if exist "C:\Program Files\Go\bin\go.exe" set "PATH=%PATH%;C:\Program Files\Go\bin"
+
+:verify_install
+if exist "C:\Program Files\Go\bin\go.exe" set "PATH=%PATH%;C:\Program Files\Go\bin"
+where go >nul 2>nul
+if %errorlevel% equ 0 (
+    echo [OK] Go compiler successfully installed!
+    echo.
+    goto build
+)
+
 echo.
+echo [OK] Go installation completed!
+echo [!] Please close this Command Prompt window and open setup.bat again to activate Go environment variables.
+echo [*] Manual download link if needed: https://go.dev/doc/install
+echo.
+pause
+exit /b 0
+
+:manual_install_instructions
+echo.
+echo ==================================================
+echo [!] Go Compiler Required
+echo ==================================================
+echo Please download and install Go manually from:
+echo 👉 https://go.dev/doc/install
+echo.
+echo After installing Go, please open setup.bat again.
+echo ==================================================
+echo.
+pause
+exit /b 1
 
 :build
 echo ==================================================
@@ -91,7 +115,9 @@ echo ==================================================
 
 go build -o go-m3u8-downloader.exe .
 if %errorlevel% neq 0 (
-    echo [ERROR] Build failed! Please check your source code and dependencies.
+    echo.
+    echo [ERROR] Build failed!
+    echo Please ensure Go (>= 1.18) is installed correctly from https://go.dev/doc/install
     echo.
     pause
     exit /b 1
