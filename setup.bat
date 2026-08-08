@@ -100,7 +100,7 @@ echo ==================================================
 echo [!] Go Compiler Required
 echo ==================================================
 echo Please download and install Go manually from:
-echo 👉 https://go.dev/doc/install
+echo -> https://go.dev/doc/install
 echo.
 echo After installing Go, please open setup.bat again.
 echo ==================================================
